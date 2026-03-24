@@ -1,0 +1,7 @@
+.env
+__pycache__/
+*.pyc
+insta_ai_env/
+test.db
+node_modules/
+.DS_Store

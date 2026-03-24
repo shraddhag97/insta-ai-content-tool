@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Instagram AI Content Generator</title>
+<script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body class="bg-gray-100">
+
+<div class="max-w-xl mx-auto mt-10 bg-white p-6 rounded-xl shadow">
+
+<h1 class="text-2xl font-bold mb-4">Instagram AI Content Generator</h1>
+
+<button onclick="loginUser()" class="bg-black text-white w-full p-3 rounded mb-3">
+Login
+</button>
+
+<label>Niche</label>
+<select id="nicheSelect" class="w-full border p-2 mb-3 rounded" onchange="handleCustomNiche()">
+<option value="fitness">Fitness</option>
+<option value="fashion">Fashion</option>
+<option value="travel">Travel</option>
+<option value="food">Food</option>
+<option value="business">Business</option>
+<option value="technology">Technology</option>
+<option value="education">Education</option>
+<option value="finance">Finance</option>
+<option value="custom">Other (Custom)</option>
+</select>
+
+<input id="customNiche" class="w-full border p-2 mb-3 rounded hidden" placeholder="Enter your niche">
+
+<label>Topic</label>
+<input id="topic" class="w-full border p-2 mb-3 rounded" placeholder="daily workout">
+
+<label>Tone</label>
+<select id="tone" class="w-full border p-2 mb-4 rounded">
+<option value="motivational">Motivational</option>
+<option value="funny">Funny</option>
+<option value="inspirational">Inspirational</option>
+<option value="professional">Professional</option>
+<option value="educational">Educational</option>
+<option value="storytelling">Storytelling</option>
+<option value="casual">Casual</option>
+<option value="luxury">Luxury</option>
+<option value="bold">Bold</option>
+<option value="friendly">Friendly</option>
+<option value="persuasive">Persuasive</option>
+</select>
+
+<button onclick="generateCaption()" class="bg-blue-600 text-white w-full p-3 rounded mb-2">
+Generate Caption
+</button>
+
+<button onclick="generateReel()" class="bg-purple-600 text-white w-full p-3 rounded mb-2">
+Generate Reel
+</button>
+
+<button onclick="generateCalendar()" class="bg-green-600 text-white w-full p-3 rounded mb-4">
+Generate Calendar
+</button>
+
+<h3 class="font-semibold mb-2">Result</h3>
+<div id="result" class="bg-gray-100 p-4 rounded min-h-[120px]"></div>
+
+</div>
+
+<script>
+const API_URL = "http://127.0.0.1:8000"
+
+// ---------------- LOGIN ----------------
+async function loginUser() {
+  const email = prompt("Enter email:")
+  const password = prompt("Enter password:")
+
+  try {
+    const response = await fetch(`${API_URL}/login`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, password })
+    })
+
+    const data = await response.json()
+
+    if (!response.ok) {
+      throw new Error(data.detail || "Login failed")
+    }
+
+    localStorage.setItem("token", data.access_token)
+    alert("Login successful")
+
+  } catch (err) {
+    alert(err.message)
+  }
+}
+
+// ---------------- HELPERS ----------------
+function getHeaders() {
+  const token = localStorage.getItem("token")
+
+  if (!token) {
+    alert("Please login first")
+    throw new Error("No token")
+  }
+
+  return {
+    "Content-Type": "application/json",
+    "Authorization": "Bearer " + token
+  }
+}
+
+function formatText(text) {
+  return text.replace(/\n/g, "<br>")
+}
+
+function getNiche() {
+  let niche = document.getElementById("nicheSelect").value
+  if (niche === "custom") {
+    niche = document.getElementById("customNiche").value
+  }
+  return niche
+}
+
+function handleCustomNiche() {
+  const select = document.getElementById("nicheSelect").value
+  const field = document.getElementById("customNiche")
+
+  if (select === "custom") {
+    field.classList.remove("hidden")
+  } else {
+    field.classList.add("hidden")
+  }
+}
+
+function showLoading() {
+  document.getElementById("result").innerHTML = "Generating..."
+}
+
+function showError(msg) {
+  document.getElementById("result").innerHTML = `<span style="color:red">${msg}</span>`
+}
+
+// ---------------- APIs ----------------
+async function generateCaption() {
+  showLoading()
+
+  try {
+    const response = await fetch(`${API_URL}/generate_caption`, {
+      method: "POST",
+      headers: getHeaders(),
+      body: JSON.stringify({
+        niche: getNiche(),
+        topic: document.getElementById("topic").value,
+        tone: document.getElementById("tone").value
+      })
+    })
+
+    const data = await response.json()
+
+    if (!response.ok) throw new Error(data.detail)
+
+    document.getElementById("result").innerHTML = formatText(data.caption)
+
+  } catch (err) {
+    showError(err.message)
+  }
+}
+
+async function generateReel() {
+  showLoading()
+
+  try {
+    const response = await fetch(`${API_URL}/generate_reel`, {
+      method: "POST",
+      headers: getHeaders(),
+      body: JSON.stringify({
+        niche: getNiche(),
+        topic: document.getElementById("topic").value,
+        tone: document.getElementById("tone").value
+      })
+    })
+
+    const data = await response.json()
+
+    if (!response.ok) throw new Error(data.detail)
+
+    document.getElementById("result").innerHTML = formatText(data.reel_script)
+
+  } catch (err) {
+    showError(err.message)
+  }
+}
+
+async function generateCalendar() {
+  showLoading()
+
+  try {
+    const response = await fetch(`${API_URL}/generate_calendar`, {
+      method: "POST",
+      headers: getHeaders(),
+      body: JSON.stringify({
+        niche: getNiche(),
+        topic: document.getElementById("topic").value,
+        tone: document.getElementById("tone").value
+      })
+    })
+
+    const data = await response.json()
+
+    if (!response.ok) throw new Error(data.detail)
+
+    document.getElementById("result").innerHTML = formatText(data.calendar)
+
+  } catch (err) {
+    showError(err.message)
+  }
+}
+</script>
+
+</body>
+</html>
